@@ -103,6 +103,9 @@ class ScriptArguments:
 parser = HfArgumentParser(ScriptArguments)
 script_args = parser.parse_args_into_dataclasses()[0]
 
+# Initialize wandb logging
+wandb.init(project="RLHF-Reward-Modeling", name="Gemma_2B_Training")
+
 # Load the value-head model and tokenizer.
 tokenizer_name = script_args.model_name
 tokenizer = AutoTokenizer.from_pretrained(tokenizer_name, use_auth_token=True)
@@ -279,5 +282,7 @@ trainer.train()
 
 print("Saving last checkpoint of the model")
 #model.save_pretrained(output_name + "/last_checkpoint")
-trainer.save_model(output_name + "/last_checkpoint")
-tokenizer.save_pretrained(output_name + "/last_checkpoint")
+# trainer.save_model(output_name + "/last_checkpoint")
+# tokenizer.save_pretrained(output_name + "/last_checkpoint")
+model.push_to_hub(script_args.hub_repo_name, use_auth_token=script_args.hf_token)
+tokenizer.push_to_hub(script_args.hub_repo_name, use_auth_token=script_args.hf_token)
