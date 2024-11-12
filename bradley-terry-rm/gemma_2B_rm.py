@@ -98,6 +98,8 @@ class ScriptArguments:
     eval_every_steps: Optional[int] = field(
         default=999999,
         metadata={"help": "Eval the model every x steps"},
+    hf_token: Optional[str] = field(default="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", metadata={"help": "Hugging Face token for model push."})  # New argument for HF token
+    hub_repo_name: Optional[str] = field(default="gemma2b_rm, metadata={"help": "Hub repository name"})  # New argument for HF repo name
     )
 
 parser = HfArgumentParser(ScriptArguments)
