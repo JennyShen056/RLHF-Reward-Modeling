@@ -12,7 +12,7 @@ import torch
 import torch.nn as nn
 from datasets import load_dataset
 
-from peft import LoraConfig, TaskType, get_peft_model, merge_and_unload
+from peft import LoraConfig, TaskType, get_peft_model
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
