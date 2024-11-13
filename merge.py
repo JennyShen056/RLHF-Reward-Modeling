@@ -12,7 +12,7 @@ adapter_repo_name = "Jennny/llama3_helpfulness_rm"  # Repository name where the 
 base_model = AutoModelForSequenceClassification.from_pretrained(
     base_model_name,
     num_labels=1,
-    torch_dtype=torch.bfloat16,
+    # torch_dtype=torch.bfloat16,
     use_flash_attention_2=True,
 )
 tokenizer = AutoTokenizer.from_pretrained(
