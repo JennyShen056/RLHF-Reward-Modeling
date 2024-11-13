@@ -38,10 +38,8 @@ rm1_tokenizer.pad_token = rm1_tokenizer.eos_token
 # Initialize the model for sequence classification
 rm1_path = "Jennny/merged_llama3_helpfulness_rm"
 RM1 = AutoModelForSequenceClassification.from_pretrained(
-    rm1_path, num_labels=1, torch_dtype=torch.bfloat16
-).to(
-    "cuda"
-)  # Change to "cpu" if not using GPU
+    rm1_path, num_labels=1, torch_dtype=torch.bfloat16, device_map="auto"
+)
 RM1.config.pad_token_id = rm1_tokenizer.pad_token_id
 RM1.eval()
 
