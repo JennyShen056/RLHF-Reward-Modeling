@@ -12,7 +12,7 @@ import torch
 import torch.nn as nn
 from datasets import load_dataset
 
-from peft import LoraConfig, TaskType, get_peft_model
+from peft import LoraConfig, TaskType, get_peft_model, merge_and_unload
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
@@ -319,6 +319,6 @@ print("Saving last checkpoint of the model")
 # model.save_pretrained(output_name + "/last_checkpoint")
 # trainer.save_model(output_name + "/last_checkpoint")
 # tokenizer.save_pretrained(output_name + "/last_checkpoint")
-# model = model.merge_and_unload()
+model = merge_and_unload(model)
 model.push_to_hub(script_args.hub_repo_name, token=script_args.hf_token)
 tokenizer.push_to_hub(script_args.hub_repo_name, token=script_args.hf_token)
