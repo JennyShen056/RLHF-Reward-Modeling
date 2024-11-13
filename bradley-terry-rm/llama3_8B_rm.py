@@ -41,11 +41,11 @@ class ScriptArguments:
             "help": "Path to deepspeed config if using deepspeed. You may need this if the model that you want to train doesn't fit on a single GPU."
         },
     )
-    per_device_train_batch_size: Optional[int] = field(default=1)
-    per_device_eval_batch_size: Optional[int] = field(default=1)
+    per_device_train_batch_size: Optional[int] = field(default=4)
+    per_device_eval_batch_size: Optional[int] = field(default=4)
     # for 8 GPU, the global batch size is 512
-    gradient_accumulation_steps: Optional[int] = field(default=64)
-    learning_rate: Optional[float] = field(default=2e-6)
+    gradient_accumulation_steps: Optional[int] = field(default=16)
+    learning_rate: Optional[float] = field(default=1e-5)
     weight_decay: Optional[float] = field(default=0.001)
     model_name: Optional[str] = field(
         default="meta-llama/Llama-3.1-8B-Instruct",
@@ -92,11 +92,11 @@ class ScriptArguments:
     max_length: Optional[int] = field(default=4096)
 
     save_every_steps: Optional[int] = field(
-        default=5000,
+        default=1000,
         metadata={"help": "Save the model every x steps"},
     )
     eval_every_steps: Optional[int] = field(
-        default=5000,
+        default=1000,
         metadata={"help": "Eval the model every x steps"},
     )
     hf_token: Optional[str] = field(
@@ -311,6 +311,6 @@ print("Saving last checkpoint of the model")
 # model.save_pretrained(output_name + "/last_checkpoint")
 # trainer.save_model(output_name + "/last_checkpoint")
 # tokenizer.save_pretrained(output_name + "/last_checkpoint")
-model = model.merge_and_unload()
+# model = model.merge_and_unload()
 model.push_to_hub(script_args.hub_repo_name, token=script_args.hf_token)
 tokenizer.push_to_hub(script_args.hub_repo_name, token=script_args.hf_token)
