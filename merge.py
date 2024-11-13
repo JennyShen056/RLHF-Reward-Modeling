@@ -1,6 +1,10 @@
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from peft import PeftModel, LoraConfig
 import torch
+from huggingface_hub import login
+
+token = "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"
+login(token=token)
 
 # Define the model and adapter repository names
 base_model_name = (
