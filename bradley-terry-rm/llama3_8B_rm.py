@@ -320,5 +320,10 @@ print("Saving last checkpoint of the model")
 # trainer.save_model(output_name + "/last_checkpoint")
 # tokenizer.save_pretrained(output_name + "/last_checkpoint")
 # model = merge_and_unload(model)
-model.push_to_hub(script_args.hub_repo_name, token=script_args.hf_token)
-tokenizer.push_to_hub(script_args.hub_repo_name, token=script_args.hf_token)
+from huggingface_hub import login
+
+token = "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"
+login(token=token)
+
+model.push_to_hub(script_args.hub_repo_name)
+tokenizer.push_to_hub(script_args.hub_repo_name)
