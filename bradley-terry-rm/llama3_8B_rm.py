@@ -106,13 +106,21 @@ class ScriptArguments:
     hub_repo_name: Optional[str] = field(
         default="llama3_helpfulness_rm", metadata={"help": "Hub repository name"}
     )
+    wandb_project: Optional[str] = field(
+        default="decoding_rm",
+        metadata={"help": "WandB project name for logging"},
+    )
+    wandb_name: Optional[str] = field(
+        default="llama3_helpfulness_rm",
+        metadata={"help": "WandB run name for logging"},
+    )
 
 
 parser = HfArgumentParser(ScriptArguments)
 script_args = parser.parse_args_into_dataclasses()[0]
 
 # Initialize wandb logging
-wandb.init(project="decoding_rm", name="llama3_helpfulness_rm")
+wandb.init(project=script_args.wandb_project, name=script_args.wandb_name)
 
 # Load the value-head model and tokenizer.
 tokenizer_name = script_args.model_name
