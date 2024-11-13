@@ -12,7 +12,7 @@ import torch
 import torch.nn as nn
 from datasets import load_dataset
 
-# from peft import LoraConfig, TaskType, get_peft_model
+from peft import LoraConfig, TaskType, get_peft_model
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
@@ -21,6 +21,7 @@ from transformers import (
     TrainingArguments,
 )
 from transformers.utils import PaddingStrategy
+import wandb
 
 
 # Define and parse arguments.
@@ -47,7 +48,7 @@ class ScriptArguments:
     learning_rate: Optional[float] = field(default=2e-6)
     weight_decay: Optional[float] = field(default=0.001)
     model_name: Optional[str] = field(
-        default="meta-llama/Meta-Llama-3-8B-Instruct",
+        default="meta-llama/Llama-3.1-8B-Instruct",
         metadata={
             "help": "The model that you want to train from the Hugging Face hub. E.g. gpt2, gpt2-xl, bert, etc."
         },
@@ -63,11 +64,11 @@ class ScriptArguments:
         metadata={"help": "The number of training epochs for the reward model."},
     )
     train_set_path: Optional[str] = field(
-        default="hendrydong/preference_700K",
+        default="Jennny/ultrafeedback_binarized_helpfulness_prefs",
         metadata={"help": "The dir of the subset of the training data to use"},
     )
     eval_set_path: Optional[str] = field(
-        default="hendrydong/preference_700K",
+        default="Jennny/ultrafeedback_binarized_helpfulness_prefs",
         metadata={"help": "The dir of the subset of the eval data to use"},
     )
     output_path: Optional[str] = field(
@@ -91,17 +92,27 @@ class ScriptArguments:
     max_length: Optional[int] = field(default=4096)
 
     save_every_steps: Optional[int] = field(
-        default=999999,
+        default=5000,
         metadata={"help": "Save the model every x steps"},
     )
     eval_every_steps: Optional[int] = field(
-        default=999999,
+        default=5000,
         metadata={"help": "Eval the model every x steps"},
+    )
+    hf_token: Optional[str] = field(
+        default="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",
+        metadata={"help": "Hugging Face token for model push."},
+    )
+    hub_repo_name: Optional[str] = field(
+        default="llama3_helpfulness_rm", metadata={"help": "Hub repository name"}
     )
 
 
 parser = HfArgumentParser(ScriptArguments)
 script_args = parser.parse_args_into_dataclasses()[0]
+
+# Initialize wandb logging
+wandb.init(project="decoding_rm", name="llama3_helpfulness_rm")
 
 # Load the value-head model and tokenizer.
 tokenizer_name = script_args.model_name
@@ -109,13 +120,13 @@ tokenizer = AutoTokenizer.from_pretrained(tokenizer_name, use_fast=False)
 
 # Adjusted according to the base model
 # Need to do this for the models that don't have an official pad token.
-# tokenizer.pad_token = tokenizer.eos_token
-# tokenizer.pad_token_id = tokenizer.eos_token_id
+tokenizer.pad_token = tokenizer.eos_token
+tokenizer.pad_token_id = tokenizer.eos_token_id
 tokenizer.add_special_tokens({"pad_token": "[PAD]"})
 print(tokenizer.padding_side)
 tokenizer.truncation_side = "left"
 tokenizer.model_max_length = script_args.max_length
-# tokenizer.padding_side = "right"
+tokenizer.padding_side = "right"
 
 
 # Get the dataset
@@ -141,7 +152,7 @@ def build_dataset(tokenizer, train_path, eval_path):
         sample["attention_mask_k"] = tokenized_neg["attention_mask"]
         return sample
 
-    ds = load_dataset(train_path, split="train").shuffle(seed=42)
+    ds = load_dataset(train_path, split="train_prefs").shuffle(seed=42)
     # ds = ds.select(range(2000))
     ds = ds.map(tokenize, num_proc=8)
 
@@ -186,12 +197,23 @@ training_args = TrainingArguments(
     report_to="wandb",
 )
 
+# enable if you want to train with lora
+peft_config = LoraConfig(
+    task_type=TaskType.SEQ_CLS,
+    inference_mode=False,
+    r=8,
+    lora_alpha=32,
+    lora_dropout=0.1,
+)
+
 model = AutoModelForSequenceClassification.from_pretrained(
     script_args.model_name,
     num_labels=1,
     torch_dtype=torch.bfloat16,
     use_flash_attention_2=True,
 )
+model = get_peft_model(model, peft_config)
+model.print_trainable_parameters()
 
 model.config.use_cache = not script_args.gradient_checkpointing
 model.config.pad_token_id = tokenizer.pad_token_id
@@ -287,5 +309,8 @@ trainer.train()
 
 print("Saving last checkpoint of the model")
 # model.save_pretrained(output_name + "/last_checkpoint")
-trainer.save_model(output_name + "/last_checkpoint")
-tokenizer.save_pretrained(output_name + "/last_checkpoint")
+# trainer.save_model(output_name + "/last_checkpoint")
+# tokenizer.save_pretrained(output_name + "/last_checkpoint")
+model = model.merge_and_unload()
+model.push_to_hub(script_args.hub_repo_name, token=script_args.hf_token)
+tokenizer.push_to_hub(script_args.hub_repo_name, token=script_args.hf_token)
