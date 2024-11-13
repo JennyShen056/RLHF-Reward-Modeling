@@ -44,7 +44,7 @@ class ScriptArguments:
     per_device_train_batch_size: Optional[int] = field(default=4)
     per_device_eval_batch_size: Optional[int] = field(default=4)
     # for 8 GPU, the global batch size is 512
-    gradient_accumulation_steps: Optional[int] = field(default=16)
+    gradient_accumulation_steps: Optional[int] = field(default=8)
     learning_rate: Optional[float] = field(default=1e-5)
     weight_decay: Optional[float] = field(default=0.001)
     model_name: Optional[str] = field(
@@ -60,7 +60,7 @@ class ScriptArguments:
         },
     )
     num_train_epochs: Optional[int] = field(
-        default=1,
+        default=3,
         metadata={"help": "The number of training epochs for the reward model."},
     )
     train_set_path: Optional[str] = field(
@@ -92,11 +92,11 @@ class ScriptArguments:
     max_length: Optional[int] = field(default=4096)
 
     save_every_steps: Optional[int] = field(
-        default=1000,
+        default=50,
         metadata={"help": "Save the model every x steps"},
     )
     eval_every_steps: Optional[int] = field(
-        default=1000,
+        default=50,
         metadata={"help": "Eval the model every x steps"},
     )
     hf_token: Optional[str] = field(
@@ -178,7 +178,7 @@ training_args = TrainingArguments(
     per_device_eval_batch_size=script_args.per_device_eval_batch_size,
     num_train_epochs=script_args.num_train_epochs,
     weight_decay=script_args.weight_decay,
-    evaluation_strategy="steps",
+    eval_strategy="steps",
     eval_steps=script_args.eval_every_steps,
     save_strategy="steps",
     save_steps=script_args.save_every_steps,
