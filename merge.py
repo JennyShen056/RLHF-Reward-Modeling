@@ -2,6 +2,7 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from peft import PeftModel, LoraConfig
 import torch
 from huggingface_hub import login
+from trl import setup_chat_format
 
 token = "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"
 login(token=token)
@@ -24,6 +25,7 @@ tokenizer = AutoTokenizer.from_pretrained(
 )
 
 base_model.config.pad_token_id = tokenizer.pad_token_id
+_, tokenizer = setup_chat_format(base_model, tokenizer)
 base_model.resize_token_embeddings(len(tokenizer))
 
 # Load the adapter and apply it to the base model
@@ -31,9 +33,6 @@ peft_model = PeftModel.from_pretrained(base_model, adapter_repo_name)
 
 # Merge the adapter weights into the base model
 merged_model = peft_model.merge_and_unload()
-
-# Load the tokenizer (optional if needed)
-tokenizer = AutoTokenizer.from_pretrained(adapter_repo_name, use_fast=False)
 
 # Optionally, push the merged model back to the Hugging Face Hub if required
 merged_model.push_to_hub("merged_llama3_helpfulness_rm")
