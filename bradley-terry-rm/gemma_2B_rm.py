@@ -158,10 +158,10 @@ def build_dataset(tokenizer, train_path, eval_path):
     eval_dataset = None
 
     train_dataset = ds
-    eval_dataset = (
-        load_dataset(eval_path, split="train").shuffle(seed=42).select(range(500))
-    )
-    # eval_dataset = ds.select(range(500))
+    # eval_dataset = (
+    #     load_dataset(eval_path, split="train").shuffle(seed=42).select(range(500))
+    # )
+    eval_dataset = ds.select(range(500))
     return train_dataset, eval_dataset
 
 
