@@ -12,7 +12,7 @@ import torch
 import torch.nn as nn
 from datasets import load_dataset
 
-from peft import LoraConfig, TaskType, get_peft_model
+# from peft import LoraConfig, TaskType, get_peft_model
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
@@ -206,13 +206,13 @@ training_args = TrainingArguments(
 )
 
 # enable if you want to train with lora
-peft_config = LoraConfig(
-    task_type=TaskType.SEQ_CLS,
-    inference_mode=False,
-    r=8,
-    lora_alpha=32,
-    lora_dropout=0.1,
-)
+# peft_config = LoraConfig(
+#     task_type=TaskType.SEQ_CLS,
+#     inference_mode=False,
+#     r=8,
+#     lora_alpha=32,
+#     lora_dropout=0.1,
+# )
 
 model = AutoModelForSequenceClassification.from_pretrained(
     script_args.model_name,
@@ -220,8 +220,8 @@ model = AutoModelForSequenceClassification.from_pretrained(
     torch_dtype=torch.bfloat16,
     use_flash_attention_2=True,
 )
-model = get_peft_model(model, peft_config)
-model.print_trainable_parameters()
+# model = get_peft_model(model, peft_config)
+# model.print_trainable_parameters()
 
 model.config.use_cache = not script_args.gradient_checkpointing
 model.config.pad_token_id = tokenizer.pad_token_id

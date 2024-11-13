@@ -15,6 +15,22 @@ base_model = AutoModelForSequenceClassification.from_pretrained(
     torch_dtype=torch.bfloat16,
     use_flash_attention_2=True,
 )
+tokenizer = AutoTokenizer.from_pretrained(
+    "meta-llama/Llama-3.1-8B-Instruct", use_fast=False
+)
+
+# Adjusted according to the base model
+# Need to do this for the models that don't have an official pad token.
+tokenizer.pad_token = tokenizer.eos_token
+tokenizer.pad_token_id = tokenizer.eos_token_id
+tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+print(tokenizer.padding_side)
+tokenizer.truncation_side = "left"
+tokenizer.model_max_length = 4096
+tokenizer.padding_side = "right"
+
+base_model.config.pad_token_id = base_model.pad_token_id
+base_model.resize_token_embeddings(len(base_model))
 
 # Load the adapter and apply it to the base model
 peft_model = PeftModel.from_pretrained(base_model, adapter_repo_name)
