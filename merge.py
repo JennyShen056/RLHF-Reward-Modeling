@@ -29,7 +29,7 @@ tokenizer.truncation_side = "left"
 tokenizer.model_max_length = 4096
 tokenizer.padding_side = "right"
 
-base_model.config.pad_token_id = base_model.pad_token_id
+base_model.config.pad_token_id = tokenizer.pad_token_id
 base_model.resize_token_embeddings(len(base_model))
 
 # Load the adapter and apply it to the base model
