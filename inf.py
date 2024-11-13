@@ -26,3 +26,4 @@ test_texts = [
 ]
 pipe_outputs = rm_pipe(test_texts, **pipe_kwargs)
 rewards = [output[0]["score"] for output in pipe_outputs]
+print(rewards)
