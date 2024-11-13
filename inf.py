@@ -2,12 +2,12 @@ from transformers import AutoTokenizer, pipeline
 import torch
 
 rm_tokenizer = AutoTokenizer.from_pretrained("Jennny/merged_llama3_helpfulness_rm")
-# device = 0  # accelerator.device
+device = 0  # accelerator.device
 rm_pipe = pipeline(
     "sentiment-analysis",
     model="Jennny/merged_llama3_helpfulness_rm",
-    device="auto",
-    # device=device,
+    # device="auto",
+    device=device,
     tokenizer=rm_tokenizer,
     model_kwargs={"torch_dtype": torch.bfloat16},
 )
