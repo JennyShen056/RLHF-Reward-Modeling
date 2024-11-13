@@ -19,9 +19,8 @@ base_model = AutoModelForSequenceClassification.from_pretrained(
     # torch_dtype=torch.bfloat16,
     # use_flash_attention_2=True,
 )
-tokenizer = AutoTokenizer.from_pretrained(
-    "meta-llama/Llama-3.1-8B-Instruct", use_fast=False
-)
+
+tokenizer = AutoTokenizer.from_pretrained(adapter_repo_name, use_fast=False)
 
 base_model.config.pad_token_id = tokenizer.pad_token_id
 base_model.resize_token_embeddings(len(tokenizer))
