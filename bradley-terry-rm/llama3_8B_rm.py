@@ -322,7 +322,7 @@ print("Saving last checkpoint of the model")
 # model = merge_and_unload(model)
 from huggingface_hub import login
 
-token = "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"
+token = "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"
 login(token=token)
 
 model.push_to_hub(script_args.hub_repo_name)
