@@ -2,7 +2,6 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from peft import PeftModel, LoraConfig
 import torch
 from huggingface_hub import login
-from trl import setup_chat_format
 
 token = "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"
 login(token=token)
