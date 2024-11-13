@@ -25,7 +25,6 @@ tokenizer = AutoTokenizer.from_pretrained(
 )
 
 base_model.config.pad_token_id = tokenizer.pad_token_id
-_, tokenizer = setup_chat_format(base_model, tokenizer)
 base_model.resize_token_embeddings(len(tokenizer))
 
 # Load the adapter and apply it to the base model

@@ -60,7 +60,7 @@ class ScriptArguments:
         },
     )
     num_train_epochs: Optional[int] = field(
-        default=3,
+        default=1,
         metadata={"help": "The number of training epochs for the reward model."},
     )
     train_set_path: Optional[str] = field(
@@ -167,8 +167,10 @@ def build_dataset(tokenizer, train_path, eval_path):
     eval_dataset = None
 
     train_dataset = ds
-    # eval_dataset = load_dataset(eval_path, split="train").shuffle(seed=42).select(range(500))
-    eval_dataset = ds.select(range(500))
+    eval_dataset = (
+        load_dataset(eval_path, split="test_prefs").shuffle(seed=42).select(range(500))
+    )
+    # eval_dataset = ds.select(range(500))
     return train_dataset, eval_dataset
 
 
