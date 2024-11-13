@@ -1,33 +1,3 @@
-# from transformers import AutoTokenizer, pipeline
-# import torch
-
-# rm_tokenizer = AutoTokenizer.from_pretrained("Jennny/merged_llama3_helpfulness_rm")
-# # device = 0  # accelerator.device
-# rm_pipe = pipeline(
-#     "sentiment-analysis",
-#     model="Jennny/merged_llama3_helpfulness_rm",
-#     device_map="auto",
-#     # device=device,
-#     tokenizer=rm_tokenizer,
-#     model_kwargs={"torch_dtype": torch.bfloat16},
-# )
-
-# pipe_kwargs = {"return_all_scores": True, "function_to_apply": "none", "batch_size": 1}
-
-# chat = [
-#     {"role": "user", "content": "Hello, how are you?"},
-#     {"role": "assistant", "content": "I'm doing great. How can I help you today?"},
-# ]
-# # You can prepare a list of texts like [text1, text2, ..., textn] and get rewards = [reward1, reward2, ..., rewardn]
-# test_texts = [
-#     rm_tokenizer.apply_chat_template(
-#         chat, tokenize=False, add_generation_prompt=False
-#     ).replace(rm_tokenizer.bos_token, "")
-# ]
-# pipe_outputs = rm_pipe(test_texts, **pipe_kwargs)
-# rewards = [output[0]["score"] for output in pipe_outputs]
-# print(rewards)
-
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 
@@ -38,35 +8,50 @@ rm1_tokenizer.pad_token = rm1_tokenizer.eos_token
 # Initialize the model for sequence classification
 rm1_path = "Jennny/merged_llama3_helpfulness_rm"
 RM1 = AutoModelForSequenceClassification.from_pretrained(
-    rm1_path, num_labels=1, torch_dtype=torch.bfloat16, device_map="auto"
+    rm1_path, num_labels=1, torch_dtype=torch.float16, device_map="auto"
 )
 RM1.config.pad_token_id = rm1_tokenizer.pad_token_id
 RM1.eval()
 
-# Define the chat for generating inputs
-chat = [
-    {"role": "user", "content": "Hello, how are you?"},
-    {"role": "assistant", "content": "I'm doing great. How can I help you today?"},
+# Define the chats for generating inputs
+chats = [
+    [
+        {"content": "What is the advantage of separable filters?", "role": "user"},
+        {
+            "content": "Separable filters are advantageous in several ways, particularly in image processing and computer graphics. They allow for efficient implementation and memory storage, enabling faster processing and improved image quality. Some advantages of separable filters include:\n\n1. Efficient Implementation: Separable filters can be applied row-by-row or column-by-column, significantly reducing the number of operations required compared to non-separable filters. This parallel processing technique leads to faster execution and improved performance.\n2. Memory Storage: Separable filters require less memory to store the filter coefficients since they can be separated into two one-dimensional filters instead of a single two-dimensional filter. This reduction in memory usage is beneficial in applications with limited memory resources.\n3. Flexibility: Separable filters offer greater flexibility in modifying and combining filtering operations. For example, you can apply different filters horizontally and vertically to achieve customized effects.\n4. Robustness: In some cases, separable filters are more robust and less sensitive to noise compared to non-separable filters. This is particularly true for certain types of edge detection and noise reduction applications.\n5. Reduced Complexity: Separable filters generally have lower computational complexity than non-separable filters. This makes them more suitable for real-time applications and systems with limited processing power.\n6. Applications: Separable filters are widely used in image and video processing, computer graphics, and many other fields like signal and speech processing, data compression, and medical imaging.\n\nOverall, separable filters provide a more efficient and effective approach to filtering operations, making them a popular choice in various applications that require fast and high-quality processing.",
+            "role": "assistant",
+        },
+    ],
+    [
+        {"content": "What is the advantage of separable filters?", "role": "user"},
+        {
+            "content": "Separable filters are advantageous because they can be analytically factored. This makes them computationally efficient when compared to non-separable filters which require a time consuming numerical solution to calculate. Additionally, separable filters are biologically interpretable which can be useful for understanding the effects of a filtering process.",
+            "role": "assistant",
+        },
+    ],
 ]
 
-# Prepare the input text
-input_text = rm1_tokenizer.apply_chat_template(
-    chat, tokenize=False, add_generation_prompt=False
-).replace(rm1_tokenizer.bos_token, "")
+# Prepare inputs for each chat and get rewards
+rewards = []
+for chat in chats:
+    # Prepare the input text for each chat
+    input_text = rm1_tokenizer.apply_chat_template(
+        chat, tokenize=False, add_generation_prompt=False
+    ).replace(rm1_tokenizer.bos_token, "")
 
-# Tokenize the input text for the model
-inputs = rm1_tokenizer(
-    input_text, return_tensors="pt", padding=True, truncation=True
-).to(
-    "cuda"
-)  # Change to "cpu" if not using GPU
+    # Tokenize the input text
+    inputs = rm1_tokenizer(
+        input_text, return_tensors="pt", padding=True, truncation=True
+    ).to(
+        "cuda"
+    )  # Change to "cpu" if not using GPU
 
-# Pass the inputs through the model to get the logits
-with torch.no_grad():
-    rm1_out = RM1(**inputs)
+    # Pass the inputs through the model to get logits
+    with torch.no_grad():
+        rm1_out = RM1(**inputs)
 
-# Extract and process the logits to get the rewards (score)
-rewards1 = rm1_out.logits.flatten().to(
-    "cpu"
-)  # Move to CPU if needed for further processing
-print(rewards1)
+    # Extract and process the logits to get the rewards (score)
+    reward = rm1_out.logits.flatten().item()  # Get score as a single float value
+    rewards.append(reward)
+
+print(rewards)
