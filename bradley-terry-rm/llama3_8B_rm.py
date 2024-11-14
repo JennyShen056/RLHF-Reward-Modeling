@@ -44,7 +44,7 @@ class ScriptArguments:
     per_device_train_batch_size: Optional[int] = field(default=4)
     per_device_eval_batch_size: Optional[int] = field(default=4)
     # for 8 GPU, the global batch size is 512
-    gradient_accumulation_steps: Optional[int] = field(default=8)
+    gradient_accumulation_steps: Optional[int] = field(default=16)
     learning_rate: Optional[float] = field(default=1e-5)
     weight_decay: Optional[float] = field(default=0.001)
     model_name: Optional[str] = field(
@@ -104,7 +104,7 @@ class ScriptArguments:
         metadata={"help": "Hugging Face token for model push."},
     )
     hub_repo_name: Optional[str] = field(
-        default="llama3_helpfulness_rm", metadata={"help": "Hub repository name"}
+        default="llama3_helpfulness_rm_full", metadata={"help": "Hub repository name"}
     )
     wandb_project: Optional[str] = field(
         default="decoding_rm",
@@ -115,6 +115,11 @@ class ScriptArguments:
         metadata={"help": "WandB run name for logging"},
     )
 
+
+from huggingface_hub import login
+
+token = "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"
+login(token=token)
 
 parser = HfArgumentParser(ScriptArguments)
 script_args = parser.parse_args_into_dataclasses()[0]
@@ -167,17 +172,14 @@ def build_dataset(tokenizer, train_path, eval_path):
     eval_dataset = None
 
     train_dataset = ds
-    # eval_dataset = (
-    #     load_dataset(eval_path, split="test_prefs").shuffle(seed=42).select(range(500))
-    # )
-    eval_dataset = ds.select(range(500))
+    eval_dataset = load_dataset(eval_path, split="test_prefs").shuffle(seed=42)
+    eval_dataset = eval_dataset.select(range(500))
+    # eval_dataset = ds.select(range(500))
     return train_dataset, eval_dataset
 
 
 train_dataset, eval_dataset = build_dataset(tokenizer, train_path, eval_path)
 print("Training set: ", len(train_dataset), " Eval set: ", len(eval_dataset))
-
-# Define the trainer
 
 
 # Define the trainer
@@ -207,23 +209,12 @@ training_args = TrainingArguments(
     report_to="wandb",
 )
 
-# enable if you want to train with lora
-peft_config = LoraConfig(
-    task_type=TaskType.SEQ_CLS,
-    inference_mode=False,
-    r=8,
-    lora_alpha=32,
-    lora_dropout=0.1,
-)
-
 model = AutoModelForSequenceClassification.from_pretrained(
     script_args.model_name,
     num_labels=1,
     torch_dtype=torch.bfloat16,
     use_flash_attention_2=True,
 )
-model = get_peft_model(model, peft_config)
-model.print_trainable_parameters()
 
 model.config.use_cache = not script_args.gradient_checkpointing
 model.config.pad_token_id = tokenizer.pad_token_id
@@ -313,17 +304,8 @@ trainer = RewardTrainer(
     ),
 )
 
+
 trainer.train()
-
-print("Saving last checkpoint of the model")
-# model.save_pretrained(output_name + "/last_checkpoint")
-# trainer.save_model(output_name + "/last_checkpoint")
-# tokenizer.save_pretrained(output_name + "/last_checkpoint")
-# model = merge_and_unload(model)
-from huggingface_hub import login
-
-token = "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"
-login(token=token)
 
 model.push_to_hub(script_args.hub_repo_name)
 tokenizer.push_to_hub(script_args.hub_repo_name)
