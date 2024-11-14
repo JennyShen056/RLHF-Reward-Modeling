@@ -99,10 +99,6 @@ class ScriptArguments:
         default=50,
         metadata={"help": "Eval the model every x steps"},
     )
-    hf_token: Optional[str] = field(
-        default="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",
-        metadata={"help": "Hugging Face token for model push."},
-    )
     hub_repo_name: Optional[str] = field(
         default="llama3_helpfulness_rm_full", metadata={"help": "Hub repository name"}
     )
@@ -115,11 +111,6 @@ class ScriptArguments:
         metadata={"help": "WandB run name for logging"},
     )
 
-
-from huggingface_hub import login
-
-token = "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"
-login(token=token)
 
 parser = HfArgumentParser(ScriptArguments)
 script_args = parser.parse_args_into_dataclasses()[0]
@@ -166,7 +157,7 @@ def build_dataset(tokenizer, train_path, eval_path):
         return sample
 
     ds = load_dataset(train_path, split="train_prefs").shuffle(seed=42)
-    # ds = ds.select(range(2000))
+    ds = ds.select(range(2000))
     ds = ds.map(tokenize, num_proc=8)
 
     eval_dataset = None

@@ -102,10 +102,6 @@ class ScriptArguments:
         default=999999,
         metadata={"help": "Eval the model every x steps"},
     )
-    hf_token: Optional[str] = field(
-        default="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",
-        metadata={"help": "Hugging Face token for model push."},
-    )
     hub_repo_name: Optional[str] = field(
         default="gemma2b_rm", metadata={"help": "Hub repository name"}
     )
@@ -305,12 +301,6 @@ print("Saving last checkpoint of the model")
 # model.save_pretrained(output_name + "/last_checkpoint")
 # trainer.save_model(output_name + "/last_checkpoint")
 # tokenizer.save_pretrained(output_name + "/last_checkpoint")
-
-
-from huggingface_hub import login
-
-token = "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"
-login(token=token)
 
 model.push_to_hub(script_args.hub_repo_name)
 tokenizer.push_to_hub(script_args.hub_repo_name)
