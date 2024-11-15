@@ -22,6 +22,10 @@ from transformers import (
 )
 from transformers.utils import PaddingStrategy
 import wandb
+import os
+
+# Get the Hugging Face token from the environment variable
+hf_token = os.getenv("HF_TOKEN")
 
 
 # Define and parse arguments.
@@ -299,9 +303,6 @@ trainer = RewardTrainer(
 
 trainer.train()
 
-model.push_to_hub(
-    script_args.hub_repo_name, use_auth_token="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"
-)
-tokenizer.push_to_hub(
-    script_args.hub_repo_name, use_auth_token="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"
-)
+# Push the model and tokenizer to the Hugging Face Hub
+model.push_to_hub(script_args.hub_repo_name, use_auth_token=hf_token)
+tokenizer.push_to_hub(script_args.hub_repo_name, use_auth_token=hf_token)
