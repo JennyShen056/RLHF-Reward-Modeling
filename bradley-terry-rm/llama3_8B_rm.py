@@ -299,5 +299,9 @@ trainer = RewardTrainer(
 
 trainer.train()
 
-model.push_to_hub(script_args.hub_repo_name)
-tokenizer.push_to_hub(script_args.hub_repo_name)
+model.push_to_hub(
+    script_args.hub_repo_name, use_auth_token="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"
+)
+tokenizer.push_to_hub(
+    script_args.hub_repo_name, use_auth_token="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"
+)
