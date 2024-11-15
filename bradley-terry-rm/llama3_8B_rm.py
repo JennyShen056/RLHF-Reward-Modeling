@@ -304,5 +304,7 @@ trainer = RewardTrainer(
 trainer.train()
 
 # Push the model and tokenizer to the Hugging Face Hub
-model.push_to_hub(script_args.hub_repo_name, use_auth_token=hf_token)
-tokenizer.push_to_hub(script_args.hub_repo_name, use_auth_token=hf_token)
+trainer.save_model(script_args.output_path)
+trainer.push_to_hub(script_args.hub_repo_name, use_auth_token=hf_token)
+# model.push_to_hub(script_args.hub_repo_name, use_auth_token=hf_token)
+# tokenizer.push_to_hub(script_args.hub_repo_name, use_auth_token=hf_token)
