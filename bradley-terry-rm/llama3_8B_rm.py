@@ -104,14 +104,14 @@ class ScriptArguments:
         metadata={"help": "Eval the model every x steps"},
     )
     hub_repo_name: Optional[str] = field(
-        default="llama3_helpfulness_rm_full", metadata={"help": "Hub repository name"}
+        default="llama3_honest_rm_full", metadata={"help": "Hub repository name"}
     )
     wandb_project: Optional[str] = field(
         default="decoding_rm",
         metadata={"help": "WandB project name for logging"},
     )
     wandb_name: Optional[str] = field(
-        default="llama3_helpfulness_rm",
+        default="llama3_honest_rm",
         metadata={"help": "WandB run name for logging"},
     )
 
