@@ -161,14 +161,14 @@ def build_dataset(tokenizer, train_path, eval_path):
         return sample
 
     ds = load_dataset(train_path, split="train_prefs").shuffle(seed=42)
-    # ds = ds.select(range(2000))
+    ds = ds.select(range(1000))
     ds = ds.map(tokenize, num_proc=8)
 
     eval_dataset = None
 
     train_dataset = ds
     eval_dataset = load_dataset(eval_path, split="test_prefs").shuffle(seed=42)
-    eval_dataset = eval_dataset.select(range(500))
+    eval_dataset = eval_dataset.select(range(50))
     eval_dataset = eval_dataset.map(tokenize, num_proc=8)
     # eval_dataset = ds.select(range(500))
     return train_dataset, eval_dataset
@@ -308,6 +308,9 @@ trainer.train()
 
 # Push the model and tokenizer to the Hugging Face Hub
 trainer.save_model(script_args.output_path)
-trainer.push_to_hub(script_args.hub_repo_name)
-model.push_to_hub(script_args.hub_repo_name)
-tokenizer.push_to_hub(script_args.hub_repo_name)
+trainer.model.push_to_hub(script_args.hub_repo_name)
+trainer.tokenizer.push_to_hub(script_args.hub_repo_name)
+
+# trainer.push_to_hub(script_args.hub_repo_name)
+# model.push_to_hub(script_args.hub_repo_name)
+# tokenizer.push_to_hub(script_args.hub_repo_name)
