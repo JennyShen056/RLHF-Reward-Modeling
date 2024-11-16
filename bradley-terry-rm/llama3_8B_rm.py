@@ -212,6 +212,9 @@ model = AutoModelForSequenceClassification.from_pretrained(
     use_flash_attention_2=True,
 )
 
+total_params = sum(p.numel() for p in model.parameters())
+print(f"Total model parameters: {total_params}")
+
 model.config.use_cache = not script_args.gradient_checkpointing
 model.config.pad_token_id = tokenizer.pad_token_id
 model.resize_token_embeddings(len(tokenizer))
@@ -307,4 +310,4 @@ trainer.train()
 trainer.save_model(script_args.output_path)
 trainer.push_to_hub(script_args.hub_repo_name)
 # model.push_to_hub(script_args.hub_repo_name, use_auth_token=hf_token)
-# tokenizer.push_to_hub(script_args.hub_repo_name, use_auth_token=hf_token)
+tokenizer.push_to_hub(script_args.hub_repo_name)
