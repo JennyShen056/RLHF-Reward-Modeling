@@ -305,6 +305,6 @@ trainer.train()
 
 # Push the model and tokenizer to the Hugging Face Hub
 trainer.save_model(script_args.output_path)
-trainer.push_to_hub(script_args.hub_repo_name, use_auth_token=hf_token)
+trainer.push_to_hub(script_args.hub_repo_name)
 # model.push_to_hub(script_args.hub_repo_name, use_auth_token=hf_token)
 # tokenizer.push_to_hub(script_args.hub_repo_name, use_auth_token=hf_token)
