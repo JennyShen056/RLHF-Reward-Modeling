@@ -2,11 +2,11 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 
 # Initialize the tokenizer
-rm1_tokenizer = AutoTokenizer.from_pretrained("Jennny/merged_llama3_helpfulness_rm")
+rm1_tokenizer = AutoTokenizer.from_pretrained("Jennny/llama3_helpful_rm_full")
 rm1_tokenizer.pad_token = rm1_tokenizer.eos_token
 
 # Initialize the model for sequence classification
-rm1_path = "Jennny/merged_llama3_helpfulness_rm"
+rm1_path = "Jennny/llama3_helpful_rm_full"
 RM1 = AutoModelForSequenceClassification.from_pretrained(
     rm1_path, num_labels=1, torch_dtype=torch.float16, device_map="auto"
 )
