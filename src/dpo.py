@@ -157,7 +157,6 @@ dpo_trainer = DPOTrainer(
     train_dataset=dataset["train"],
     eval_dataset=dataset["test"],
     tokenizer=tokenizer,
-    dpo_config=dpo_config,
 )
 dpo_trainer.train()
 tokenizer.push_to_hub(script_args.hub_repo_name)
