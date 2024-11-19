@@ -126,7 +126,7 @@ dataset = dataset.map(
 )
 dataset = dataset.train_test_split(test_size=0.01)
 
-training_args = TrainingArguments(
+training_args = DPOConfig(
     per_device_train_batch_size=script_args.per_device_train_batch_size,
     per_device_eval_batch_size=script_args.per_device_train_batch_size,
     gradient_accumulation_steps=script_args.gradient_accumulation_steps,
@@ -139,19 +139,15 @@ training_args = TrainingArguments(
     # max_steps=200,
     num_train_epochs=1,
     logging_steps=10,
-    # output_dir=script_args.output_path,
+    output_dir=script_args.output_path,
     optim="paged_adamw_32bit",
     warmup_steps=100,
     bf16=True,
     report_to="wandb",
-)
-
-dpo_config = DPOConfig(
     beta=0.1,
     max_prompt_length=1024,
     max_length=1512,
     force_use_ref_model=True,
-    output_dir=script_args.output_path,
 )
 
 dpo_trainer = DPOTrainer(
