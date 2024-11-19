@@ -188,7 +188,6 @@ training_args = TrainingArguments(
     weight_decay=script_args.weight_decay,
     eval_strategy="steps",
     eval_steps=script_args.eval_every_steps,
-    save_strategy="steps",
     save_steps=script_args.save_every_steps,
     gradient_accumulation_steps=script_args.gradient_accumulation_steps,
     gradient_checkpointing=script_args.gradient_checkpointing,
