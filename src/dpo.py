@@ -98,15 +98,15 @@ tokenizer.truncation_side = "left"  # to prevent cutting off last generation
 model = AutoModelForCausalLM.from_pretrained(
     base_model,
     torch_dtype=torch.bfloat16,
-    device_map="auto",
-    # attn_implementation="flash_attention_2",
+    # device_map="auto",
+    attn_implementation="flash_attention_2",
 )
 # Reference model
 ref_model = AutoModelForCausalLM.from_pretrained(
     base_model,
     torch_dtype=torch.bfloat16,
-    device_map="auto",
-    # attn_implementation="flash_attention_2",
+    # device_map="auto",
+    attn_implementation="flash_attention_2",
 )
 
 # Load dataset
