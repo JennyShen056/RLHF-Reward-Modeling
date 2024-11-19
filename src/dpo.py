@@ -10,7 +10,7 @@ from transformers import (
     BitsAndBytesConfig,
 )
 from datasets import load_dataset
-from trl import DPOTrainer, setup_chat_format
+from trl import DPOTrainer, DPOConfig, setup_chat_format
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 from huggingface_hub import login
@@ -79,8 +79,6 @@ parser = HfArgumentParser(ScriptArguments)
 script_args = parser.parse_args_into_dataclasses()[0]
 wandb.init(project=script_args.wandb_project, name=script_args.wandb_name)
 
-login(token=script_args.hf_token, add_to_git_credential=True)  # ADD YOUR TOKEN HERE
-
 base_model = script_args.model_name
 
 if torch.cuda.get_device_capability()[0] >= 8:
@@ -101,12 +99,14 @@ model = AutoModelForCausalLM.from_pretrained(
     base_model,
     torch_dtype=torch.bfloat16,
     device_map="auto",
+    # attn_implementation="flash_attention_2",
 )
 # Reference model
 ref_model = AutoModelForCausalLM.from_pretrained(
     base_model,
     torch_dtype=torch.bfloat16,
     device_map="auto",
+    # attn_implementation="flash_attention_2",
 )
 
 # Load dataset
@@ -146,6 +146,13 @@ training_args = TrainingArguments(
     report_to="wandb",
 )
 
+dpo_config = DPOConfig(
+    beta=0.1,
+    max_prompt_length=1024,
+    max_length=1512,
+    force_use_ref_model=True,
+)
+
 dpo_trainer = DPOTrainer(
     model,
     ref_model,
@@ -153,10 +160,7 @@ dpo_trainer = DPOTrainer(
     train_dataset=dataset["train"],
     eval_dataset=dataset["test"],
     tokenizer=tokenizer,
-    beta=0.1,
-    max_prompt_length=1024,
-    max_length=1512,
-    force_use_ref_model=True,
+    dpo_config=dpo_config,
 )
 dpo_trainer.train()
 tokenizer.push_to_hub(script_args.hub_repo_name)

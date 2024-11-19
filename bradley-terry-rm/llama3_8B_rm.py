@@ -208,7 +208,7 @@ model = AutoModelForSequenceClassification.from_pretrained(
     script_args.model_name,
     num_labels=1,
     torch_dtype=torch.bfloat16,
-    use_flash_attention_2=True,
+    attn_implementation="flash_attention_2",
 )
 
 total_params = sum(p.numel() for p in model.parameters())
