@@ -31,7 +31,7 @@ class ScriptArguments:
         default=4, metadata={"help": "Batch size per device during training"}
     )
     gradient_accumulation_steps: int = field(
-        default=4, metadata={"help": "Number of gradient accumulation steps"}
+        default=16, metadata={"help": "Number of gradient accumulation steps"}
     )
     model_name: Optional[str] = field(
         default="meta-llama/Llama-3.1-8B-Instruct",
@@ -138,8 +138,7 @@ training_args = TrainingArguments(
     lr_scheduler_type="cosine",
     # max_steps=200,
     num_train_epochs=1,
-    save_strategy="no",
-    logging_steps=1,
+    logging_steps=10,
     output_dir=script_args.output_path,
     optim="paged_adamw_32bit",
     warmup_steps=100,
