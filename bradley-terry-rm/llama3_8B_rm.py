@@ -52,7 +52,7 @@ class ScriptArguments:
     learning_rate: Optional[float] = field(default=1e-5)
     weight_decay: Optional[float] = field(default=0.001)
     model_name: Optional[str] = field(
-        default="meta-llama/Llama-3.1-8B-Instruct",
+        default="Jennny/llama3_8b_sft_ultrafb",
         metadata={
             "help": "The model that you want to train from the Hugging Face hub. E.g. gpt2, gpt2-xl, bert, etc."
         },
@@ -161,14 +161,15 @@ def build_dataset(tokenizer, train_path, eval_path):
         return sample
 
     ds = load_dataset(train_path, split="train_prefs").shuffle(seed=42)
-    # ds = ds.select(range(1000))
+    ds = ds.select(range(1000))
     ds = ds.map(tokenize, num_proc=8)
 
     eval_dataset = None
 
     train_dataset = ds
     eval_dataset = load_dataset(eval_path, split="test_prefs").shuffle(seed=42)
-    eval_dataset = eval_dataset.select(range(500))
+    eval_dataset = eval_dataset.select(range(50))
+    # eval_dataset = eval_dataset.select(range(500))
     eval_dataset = eval_dataset.map(tokenize, num_proc=8)
     # eval_dataset = ds.select(range(500))
     return train_dataset, eval_dataset
