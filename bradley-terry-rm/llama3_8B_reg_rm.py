@@ -88,11 +88,8 @@ def build_dataset(tokenizer, split="train", eval_split=0.1):
     def tokenize(sample):
         # Combine prompt and response using chat template
         messages = [
-            {"role": "user", "content": sample["prompt"]},  # Changed from "input"
-            {
-                "role": "assistant",
-                "content": sample["response"],
-            },  # Changed from "output"
+            {"role": "user", "content": sample["prompt"]},
+            {"role": "assistant", "content": sample["response"]},
         ]
         full_text = tokenizer.apply_chat_template(
             messages, tokenize=False, add_generation_prompt=False
@@ -104,17 +101,23 @@ def build_dataset(tokenizer, split="train", eval_split=0.1):
         )
 
         # Add helpfulness score
-        tokenized["labels"] = float(
-            sample["helpfulness"]
-        )  # Changed from "score" to "labels"
+        tokenized["labels"] = float(sample["helpfulness"])
         return tokenized
 
     processed_dataset = dataset.map(
         tokenize,
-        remove_columns=dataset.column_names,  # Remove original columns
+        remove_columns=dataset.column_names,
         num_proc=8,
     )
-    return processed_dataset
+
+    if split == "train" and eval_split > 0:
+        # Split the processed dataset into train and eval
+        train_test_dict = processed_dataset.train_test_split(
+            test_size=eval_split, seed=42
+        )
+        return train_test_dict["train"], train_test_dict["test"]
+
+    return processed_dataset, None  # Return the dataset and None for non-train splits
 
 
 class ScoreRewardTrainer(Trainer):
