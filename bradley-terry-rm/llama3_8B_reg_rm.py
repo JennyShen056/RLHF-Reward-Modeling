@@ -75,9 +75,9 @@ class ScoreDataCollatorWithPadding:
             pad_to_multiple_of=self.pad_to_multiple_of,
             return_tensors=self.return_tensors,
         )
-        if "score" in features[0]:
+        if "labels" in features[0]:  # Changed from "score" to "labels"
             batch["labels"] = torch.tensor(
-                [f["score"] for f in features], dtype=torch.float
+                [f["labels"] for f in features], dtype=torch.float
             )
         return batch
 
@@ -88,30 +88,32 @@ def build_dataset(tokenizer, split="train", eval_split=0.1):
     def tokenize(sample):
         # Combine prompt and response using chat template
         messages = [
-            {"role": "user", "content": sample["prompt"]},
-            {"role": "assistant", "content": sample["response"]},
+            {"role": "user", "content": sample["prompt"]},  # Changed from "input"
+            {
+                "role": "assistant",
+                "content": sample["response"],
+            },  # Changed from "output"
         ]
         full_text = tokenizer.apply_chat_template(
             messages, tokenize=False, add_generation_prompt=False
         )
 
+        # Tokenize text
         tokenized = tokenizer(
             full_text, truncation=True, max_length=tokenizer.model_max_length
         )
 
-        # Scale helpfulness score to 0-4 range
-        tokenized["score"] = float(sample["helpfulness"])
+        # Add helpfulness score
+        tokenized["labels"] = float(
+            sample["helpfulness"]
+        )  # Changed from "score" to "labels"
         return tokenized
 
     processed_dataset = dataset.map(
-        tokenize, remove_columns=dataset.column_names, num_proc=8
+        tokenize,
+        remove_columns=dataset.column_names,  # Remove original columns
+        num_proc=8,
     )
-
-    if split == "train" and eval_split > 0:
-        # Split the training data
-        train_val = processed_dataset.train_test_split(test_size=eval_split, seed=42)
-        return train_val["train"], train_val["test"]
-
     return processed_dataset
 
 
@@ -200,6 +202,7 @@ def main():
         optim=args.optim,
         lr_scheduler_type=args.lr_scheduler_type,
         report_to="wandb",  # Enable wandb logging
+        remove_unused_columns=False,  # Added this line
     )
 
     # Initialize trainer
