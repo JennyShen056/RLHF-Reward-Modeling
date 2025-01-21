@@ -1,9 +1,11 @@
+# train_reward_model.py
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import torch
 import torch.nn as nn
 from datasets import load_dataset
+import transformers
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
@@ -76,12 +78,11 @@ class ScoreDataCollatorWithPadding:
     def __call__(self, features: List[Dict[str, Any]]) -> Dict[str, Any]:
         batch = self.tokenizer.pad(
             features,
-            padding=self.padding,
+            padding="max_length",
             max_length=self.max_length,
-            pad_to_multiple_of=self.pad_to_multiple_of,
             return_tensors=self.return_tensors,
         )
-        if "labels" in features[0]:  # Changed from "score" to "labels"
+        if "labels" in features[0]:
             batch["labels"] = torch.tensor(
                 [f["labels"] for f in features], dtype=torch.float
             )
@@ -92,7 +93,6 @@ def build_dataset(tokenizer, split="train", eval_split=0.1):
     dataset = load_dataset("nvidia/HelpSteer2", split=split)
 
     def tokenize(sample):
-        # Combine prompt and response using chat template
         messages = [
             {"role": "user", "content": sample["prompt"]},
             {"role": "assistant", "content": sample["response"]},
@@ -101,12 +101,14 @@ def build_dataset(tokenizer, split="train", eval_split=0.1):
             messages, tokenize=False, add_generation_prompt=False
         )
 
-        # Tokenize text
         tokenized = tokenizer(
-            full_text, truncation=True, max_length=tokenizer.model_max_length
+            full_text,
+            padding="max_length",
+            truncation=True,
+            max_length=tokenizer.model_max_length,
+            return_tensors=None,
         )
 
-        # Add helpfulness score
         tokenized["labels"] = float(sample["helpfulness"])
         return tokenized
 
@@ -117,13 +119,12 @@ def build_dataset(tokenizer, split="train", eval_split=0.1):
     )
 
     if split == "train" and eval_split > 0:
-        # Split the processed dataset into train and eval
         train_test_dict = processed_dataset.train_test_split(
             test_size=eval_split, seed=42
         )
         return train_test_dict["train"], train_test_dict["test"]
 
-    return processed_dataset, None  # Return the dataset and None for non-train splits
+    return processed_dataset, None
 
 
 class ScoreRewardTrainer(Trainer):
@@ -157,7 +158,6 @@ def main():
     parser = HfArgumentParser(ScriptArguments)
     args = parser.parse_args_into_dataclasses()[0]
 
-    # Initialize wandb
     wandb.init(
         project=args.wandb_project,
         name=args.wandb_name,
@@ -173,29 +173,32 @@ def main():
         },
     )
 
-    # Initialize tokenizer
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.pad_token_id = tokenizer.eos_token_id
     tokenizer.padding_side = "right"
 
-    # Load base model
-    base_model = AutoModelForSequenceClassification.from_pretrained(
+    model_config = transformers.AutoConfig.from_pretrained(
         args.model_name,
         num_labels=1,
+        pad_token_id=tokenizer.pad_token_id,
+        use_cache=False,
+    )
+
+    base_model = AutoModelForSequenceClassification.from_pretrained(
+        args.model_name,
+        config=model_config,
         torch_dtype=torch.bfloat16,
     )
-    base_model.config.pad_token_id = tokenizer.pad_token_id
-    base_model.config.use_cache = False  # For gradient checkpointing
 
-    # Create reward model
     model = ScoreRewardModel(base_model)
 
-    # Prepare datasets - split train into train and eval
+    if hasattr(model, "_set_static_graph"):
+        model._set_static_graph()
+
     train_dataset, eval_dataset = build_dataset(tokenizer, "train", eval_split=0.1)
     print(f"Train size: {len(train_dataset)}, Eval size: {len(eval_dataset)}")
 
-    # Training arguments
     training_args = TrainingArguments(
         output_dir=args.output_dir,
         learning_rate=args.learning_rate,
@@ -204,40 +207,39 @@ def main():
         num_train_epochs=args.num_train_epochs,
         weight_decay=args.weight_decay,
         gradient_accumulation_steps=args.gradient_accumulation_steps,
-        gradient_checkpointing=args.gradient_checkpointing,
+        gradient_checkpointing=True,
         bf16=args.bf16,
-        eval_strategy="steps",  # Changed from evaluation_strategy to eval_strategy
+        eval_strategy="steps",
         eval_steps=100,
         save_strategy="steps",
         save_steps=100,
         logging_steps=10,
         optim=args.optim,
         lr_scheduler_type=args.lr_scheduler_type,
-        report_to="wandb",  # Enable wandb logging
-        remove_unused_columns=False,  # Added this line
+        report_to="wandb",
+        remove_unused_columns=False,
+        ddp_find_unused_parameters=False,
+        ddp_bucket_cap_mb=25,
+        deepspeed=args.deepspeed,
     )
 
-    # Initialize trainer
     trainer = ScoreRewardTrainer(
         model=model,
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         data_collator=ScoreDataCollatorWithPadding(
-            tokenizer=tokenizer, max_length=args.max_length
+            tokenizer=tokenizer, padding="max_length", max_length=args.max_length
         ),
         compute_metrics=compute_metrics,
     )
 
-    # Train
     trainer.train()
     tokenizer.push_to_hub(args.hub_repo_name)
 
-    # Save model
+    # Push the model and tokenizer to the Hugging Face Hub
     trainer.save_model(args.hub_repo_name)
     trainer.push_to_hub(args.hub_repo_name)
-
-    # Close wandb run
     wandb.finish()
 
 
