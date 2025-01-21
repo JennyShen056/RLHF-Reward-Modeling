@@ -176,6 +176,7 @@ def main():
     # Initialize tokenizer
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)
     tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.pad_token_id = tokenizer.eos_token_id
     tokenizer.padding_side = "right"
 
     # Load base model
@@ -184,6 +185,8 @@ def main():
         num_labels=1,
         torch_dtype=torch.bfloat16,
     )
+    base_model.config.pad_token_id = tokenizer.pad_token_id
+    base_model.config.use_cache = False  # For gradient checkpointing
 
     # Create reward model
     model = ScoreRewardModel(base_model)
