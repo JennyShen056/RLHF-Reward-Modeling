@@ -44,6 +44,7 @@ class ScoreRewardModel(nn.Module):
     def __init__(self, base_model, dropout=0.1):
         super().__init__()
         self.base_model = base_model
+        self.config = base_model.config  # Add this line to expose the config
         hidden_size = self.base_model.config.hidden_size
         self.score_head = nn.Sequential(
             nn.Dropout(dropout),
