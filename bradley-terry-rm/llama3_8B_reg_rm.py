@@ -58,6 +58,12 @@ class ScoreRewardModel(nn.Module):
         score = self.score_head(hidden_state) * 4  # Scale to 0-4 range
         return score
 
+    def gradient_checkpointing_enable(self, gradient_checkpointing_kwargs=None):
+        self.base_model.gradient_checkpointing_enable(gradient_checkpointing_kwargs)
+
+    def gradient_checkpointing_disable(self):
+        self.base_model.gradient_checkpointing_disable()
+
 
 @dataclass
 class ScoreDataCollatorWithPadding:
@@ -197,7 +203,7 @@ def main():
         gradient_accumulation_steps=args.gradient_accumulation_steps,
         gradient_checkpointing=args.gradient_checkpointing,
         bf16=args.bf16,
-        evaluation_strategy="steps",
+        eval_strategy="steps",  # Changed from evaluation_strategy to eval_strategy
         eval_steps=100,
         save_strategy="steps",
         save_steps=100,
