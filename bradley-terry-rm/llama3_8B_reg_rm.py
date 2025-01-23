@@ -1,4 +1,4 @@
-# train_reward_model.py
+# llama3_8B_reg_rm.py
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 import numpy as np
@@ -189,6 +189,7 @@ def main():
     base_model = AutoModelForSequenceClassification.from_pretrained(
         args.model_name,
         config=model_config,
+        device_map="auto",  # Automatically splits model across GPUs
         torch_dtype=torch.bfloat16,
     )
 
