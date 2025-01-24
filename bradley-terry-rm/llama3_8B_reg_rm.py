@@ -189,7 +189,6 @@ def main():
     base_model = AutoModelForSequenceClassification.from_pretrained(
         args.model_name,
         config=model_config,
-        device_map="auto",  # Automatically splits model across GPUs
         torch_dtype=torch.bfloat16,
     )
 
