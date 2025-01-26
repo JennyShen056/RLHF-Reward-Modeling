@@ -141,6 +141,7 @@ def main():
         problem_type="regression",
         pad_token_id=tokenizer.pad_token_id,
         use_cache=False,
+        use_memory_efficient_attention=True,
     )
 
     model = AutoModelForSequenceClassification.from_pretrained(
