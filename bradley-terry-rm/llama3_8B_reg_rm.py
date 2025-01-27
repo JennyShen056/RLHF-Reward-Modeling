@@ -39,8 +39,8 @@ class ScriptArguments:
     hub_model_name: Optional[str] = field(default="llama3_reg_rm_lora")
     wandb_project: Optional[str] = field(default="llama3_reg_reward_model_lora")
     wandb_name: Optional[str] = field(default="llama3_reg_rm_lora")
-    lora_r: Optional[int] = field(default=64)
-    lora_alpha: Optional[int] = field(default=128)
+    lora_r: Optional[int] = field(default=16)
+    lora_alpha: Optional[int] = field(default=32)
     lora_dropout: Optional[float] = field(default=0.1)
 
 
@@ -148,6 +148,7 @@ def main():
         args.model_name,
         config=model_config,
         torch_dtype=torch.bfloat16,
+        low_cpu_mem_usage=True,
     )
 
     # Configure LoRA
