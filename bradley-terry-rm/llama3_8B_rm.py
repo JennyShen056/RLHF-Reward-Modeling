@@ -167,7 +167,7 @@ def build_dataset(tokenizer, train_path, eval_path):
     eval_dataset = None
 
     train_dataset = ds
-    eval_dataset = load_dataset(eval_path, split="test_prefs").shuffle(seed=42)
+    eval_dataset = load_dataset(eval_path, split="validation").shuffle(seed=42)
     # eval_dataset = eval_dataset.select(range(50))
     # eval_dataset = eval_dataset.select(range(500))
     eval_dataset = eval_dataset.map(tokenize, num_proc=8)
