@@ -45,10 +45,10 @@ class ScriptArguments:
             "help": "Path to deepspeed config if using deepspeed. You may need this if the model that you want to train doesn't fit on a single GPU."
         },
     )
-    per_device_train_batch_size: Optional[int] = field(default=4)
-    per_device_eval_batch_size: Optional[int] = field(default=4)
+    per_device_train_batch_size: Optional[int] = field(default=2)
+    per_device_eval_batch_size: Optional[int] = field(default=2)
     # for 8 GPU, the global batch size is 512
-    gradient_accumulation_steps: Optional[int] = field(default=16)
+    gradient_accumulation_steps: Optional[int] = field(default=8)
     learning_rate: Optional[float] = field(default=1e-5)
     weight_decay: Optional[float] = field(default=0.001)
     model_name: Optional[str] = field(
@@ -64,7 +64,7 @@ class ScriptArguments:
         },
     )
     num_train_epochs: Optional[int] = field(
-        default=1,
+        default=2,
         metadata={"help": "The number of training epochs for the reward model."},
     )
     train_set_path: Optional[str] = field(
@@ -96,11 +96,11 @@ class ScriptArguments:
     max_length: Optional[int] = field(default=4096)
 
     save_every_steps: Optional[int] = field(
-        default=50,
+        default=10,
         metadata={"help": "Save the model every x steps"},
     )
     eval_every_steps: Optional[int] = field(
-        default=50,
+        default=10,
         metadata={"help": "Eval the model every x steps"},
     )
     hub_repo_name: Optional[str] = field(
@@ -198,7 +198,7 @@ training_args = TrainingArguments(
     label_names=[],
     bf16=script_args.bf16,
     logging_strategy="steps",
-    logging_steps=10,
+    logging_steps=5,
     optim=script_args.optim,
     lr_scheduler_type=script_args.lr_scheduler_type,
     warmup_ratio=0.03,
