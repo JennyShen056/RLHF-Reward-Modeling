@@ -160,7 +160,7 @@ def build_dataset(tokenizer, train_path, eval_path):
         sample["attention_mask_k"] = tokenized_neg["attention_mask"]
         return sample
 
-    ds = load_dataset(train_path, split="train_prefs").shuffle(seed=42)
+    ds = load_dataset(train_path, split="train").shuffle(seed=42)
     # ds = ds.select(range(1000))
     ds = ds.map(tokenize, num_proc=8)
 
