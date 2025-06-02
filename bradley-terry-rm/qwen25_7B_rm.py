@@ -4,10 +4,6 @@
 # If you have any question, feel free to send me an email via wx13@illinois.edu
 ########################
 import os
-
-# remove any leftover DDP env-vars so that `device_map="auto"` won't try to initialize torch.distributed
-for v in ("LOCAL_RANK", "WORLD_SIZE", "RANK", "MASTER_ADDR", "MASTER_PORT"):
-    os.environ.pop(v, None)
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 
