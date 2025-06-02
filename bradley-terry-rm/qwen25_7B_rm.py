@@ -76,7 +76,7 @@ class ScriptArguments:
         metadata={"help": "The dir of the subset of the eval data to use"},
     )
     output_path: Optional[str] = field(
-        default="./models/qwen25_rm",
+        default="./models/qwen25_math_acc_rm",
         metadata={"help": "The dir for output model"},
     )
     gradient_checkpointing: Optional[bool] = field(
