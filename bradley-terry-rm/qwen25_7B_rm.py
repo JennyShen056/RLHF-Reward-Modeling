@@ -68,11 +68,11 @@ class ScriptArguments:
         metadata={"help": "The number of training epochs for the reward model."},
     )
     train_set_path: Optional[str] = field(
-        default="Jennny/ultrafeedback_binarized_helpfulness_prefs",
+        default="Jennny/math_acc_pref",
         metadata={"help": "The dir of the subset of the training data to use"},
     )
     eval_set_path: Optional[str] = field(
-        default="Jennny/ultrafeedback_binarized_helpfulness_prefs",
+        default="Jennny/math_acc_pref",
         metadata={"help": "The dir of the subset of the eval data to use"},
     )
     output_path: Optional[str] = field(
