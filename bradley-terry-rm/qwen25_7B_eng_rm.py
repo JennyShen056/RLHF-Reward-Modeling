@@ -3,6 +3,11 @@
 # This script is designed for the reward modeling with Mistral model which should be handled carefully because it does not have an official pad token
 # If you have any question, feel free to send me an email via wx13@illinois.edu
 ########################
+import os
+
+# remove any leftover DDP env-vars so that `device_map="auto"` won't try to initialize torch.distributed
+for v in ("LOCAL_RANK", "WORLD_SIZE", "RANK", "MASTER_ADDR", "MASTER_PORT"):
+    os.environ.pop(v, None)
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 
@@ -22,7 +27,6 @@ from transformers import (
 )
 from transformers.utils import PaddingStrategy
 import wandb
-import os
 
 # Get the Hugging Face token from the environment variable
 hf_token = os.getenv("HF_TOKEN")
