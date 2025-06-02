@@ -148,10 +148,10 @@ def build_dataset(tokenizer, train_path, eval_path):
     def tokenize(sample):
         sample["positive"] = tokenizer.apply_chat_template(
             sample["chosen"], tokenize=False, add_generation_prompt=False
-        ).replace(tokenizer.bos_token, "")
+        )
         sample["negative"] = tokenizer.apply_chat_template(
             sample["rejected"], tokenize=False, add_generation_prompt=False
-        ).replace(tokenizer.bos_token, "")
+        )
         tokenized_pos = tokenizer(sample["positive"], truncation=True)
         tokenized_neg = tokenizer(sample["negative"], truncation=True)
         sample["input_ids_j"] = tokenized_pos["input_ids"]
