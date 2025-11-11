@@ -92,11 +92,11 @@ class ScriptArguments:
     max_length: Optional[int] = field(default=4096)
 
     save_every_steps: Optional[int] = field(
-        default=50,
+        default=10,
         metadata={"help": "Save the model every x steps"},
     )
     eval_every_steps: Optional[int] = field(
-        default=50,
+        default=10,
         metadata={"help": "Eval the model every x steps"},
     )
     hub_repo_name: Optional[str] = field(
