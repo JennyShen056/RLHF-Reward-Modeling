@@ -21,6 +21,8 @@ from transformers import (
 )
 from transformers.utils import PaddingStrategy
 
+import wandb
+import os
 
 
 
@@ -39,14 +41,14 @@ class ScriptArguments:
             "help": "Path to deepspeed config if using deepspeed. You may need this if the model that you want to train doesn't fit on a single GPU."
         },
     )
-    per_device_train_batch_size: Optional[int] = field(default=1)
-    per_device_eval_batch_size: Optional[int] = field(default=1)
+    per_device_train_batch_size: Optional[int] = field(default=16)
+    per_device_eval_batch_size: Optional[int] = field(default=8)
     # for 8 GPU, the global batch size is 512
-    gradient_accumulation_steps: Optional[int] = field(default=64)
+    gradient_accumulation_steps: Optional[int] = field(default=4)
     learning_rate: Optional[float] = field(default=2e-6)
     weight_decay: Optional[float] = field(default=0.001)
     model_name: Optional[str] = field(
-        default="meta-llama/Meta-Llama-3-8B-Instruct",
+        default="meta-llama/Llama-3.1-8B-Instruct",
         metadata={
             "help": "The model that you want to train from the Hugging Face hub. E.g. gpt2, gpt2-xl, bert, etc."
         },
@@ -62,11 +64,11 @@ class ScriptArguments:
         metadata={"help": "The number of training epochs for the reward model."},
     )
     train_set_path: Optional[str] = field(
-        default="hendrydong/preference_700K",
+        default="Jennny/h3_pairs",
         metadata={"help": "The dir of the subset of the training data to use"},
     )
     eval_set_path: Optional[str] = field(
-        default="hendrydong/preference_700K",
+        default="Jennny/h3_pairs",
         metadata={"help": "The dir of the subset of the eval data to use"},
     )
     output_path: Optional[str] = field(
@@ -90,17 +92,30 @@ class ScriptArguments:
     max_length: Optional[int] = field(default=4096)
 
     save_every_steps: Optional[int] = field(
-        default=999999,
+        default=50,
         metadata={"help": "Save the model every x steps"},
     )
     eval_every_steps: Optional[int] = field(
-        default=999999,
+        default=50,
         metadata={"help": "Eval the model every x steps"},
     )
-
+    hub_repo_name: Optional[str] = field(
+        default="llama31_help_rm_full", metadata={"help": "Hub repository name"}
+    )
+    wandb_project: Optional[str] = field(
+        default="helpsteer",
+        metadata={"help": "WandB project name for logging"},
+    )
+    wandb_name: Optional[str] = field(
+        default="llama31_help_rm",
+        metadata={"help": "WandB run name for logging"},
+    )
 
 parser = HfArgumentParser(ScriptArguments)
 script_args = parser.parse_args_into_dataclasses()[0]
+
+# Initialize wandb logging
+wandb.init(project=script_args.wandb_project, name=script_args.wandb_name)
 
 # Load the value-head model and tokenizer.
 tokenizer_name = script_args.model_name
@@ -108,8 +123,8 @@ tokenizer = AutoTokenizer.from_pretrained(tokenizer_name, use_fast = False)
 
 # Adjusted according to the base model
 # Need to do this for the models that don't have an official pad token.
-#tokenizer.pad_token = tokenizer.eos_token
-#tokenizer.pad_token_id = tokenizer.eos_token_id
+# tokenizer.pad_token = tokenizer.eos_token
+# tokenizer.pad_token_id = tokenizer.eos_token_id
 tokenizer.add_special_tokens({'pad_token': '[PAD]'})
 print(tokenizer.padding_side)
 tokenizer.truncation_side = "left"
@@ -147,7 +162,11 @@ def build_dataset(tokenizer, train_path, eval_path):
 
     train_dataset = ds
     #eval_dataset = load_dataset(eval_path, split="train").shuffle(seed=42).select(range(500))
-    eval_dataset = ds.select(range(500))
+    eval_dataset = load_dataset(eval_path, split="validation").shuffle(seed=42)
+
+    # eval_dataset = ds.select(range(500))
+    eval_dataset = eval_dataset.map(tokenize, num_proc=8)
+
     return train_dataset, eval_dataset
 
 
@@ -276,9 +295,14 @@ trainer = RewardTrainer(
 
 
 trainer.train()
-
-
 print("Saving last checkpoint of the model")
-#model.save_pretrained(output_name + "/last_checkpoint")
-trainer.save_model(output_name + "/last_checkpoint")
-tokenizer.save_pretrained(output_name + "/last_checkpoint")
+
+
+tokenizer.push_to_hub(script_args.hub_repo_name)
+# Push the model and tokenizer to the Hugging Face Hub
+trainer.save_model(script_args.hub_repo_name)
+trainer.push_to_hub(script_args.hub_repo_name)
+
+# #model.save_pretrained(output_name + "/last_checkpoint")
+# trainer.save_model(output_name + "/last_checkpoint")
+# tokenizer.save_pretrained(output_name + "/last_checkpoint")
